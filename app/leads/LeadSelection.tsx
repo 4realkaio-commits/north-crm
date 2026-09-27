@@ -588,6 +588,12 @@ export default function LeadSelection({
                         lead.id
                       )
 
+                    const isConverted =
+                      lead.status
+                        .trim()
+                        .toLowerCase() ===
+                      'convertido'
+
                     return (
                       <tr
                         key={lead.id}
@@ -685,20 +691,22 @@ export default function LeadSelection({
 
                         <td className="px-6 py-5">
                           <span className="text-sm font-medium text-gray-800">
-                            {lead.potential_value !==
-                            null
-                              ? Number(
-                                  lead.potential_value
-                                ).toLocaleString(
-                                  'pt-BR',
-                                  {
-                                    style:
-                                      'currency',
-                                    currency:
-                                      'BRL',
-                                  }
-                                )
-                              : '—'}
+                            {isConverted
+                              ? '—'
+                              : lead.potential_value !==
+                                  null
+                                ? Number(
+                                    lead.potential_value
+                                  ).toLocaleString(
+                                    'pt-BR',
+                                    {
+                                      style:
+                                        'currency',
+                                      currency:
+                                        'BRL',
+                                    }
+                                  )
+                                : '—'}
                           </span>
                         </td>
 

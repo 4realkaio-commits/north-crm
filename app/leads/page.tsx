@@ -77,13 +77,20 @@ export default async function LeadsPage() {
 
   const safeLeads = (leads ?? []) as Lead[]
 
-  const totalPotential = safeLeads.reduce(
+  const activeLeads = safeLeads.filter(
+    (lead) =>
+      String(lead.status ?? '')
+        .trim()
+        .toLowerCase() !== 'convertido'
+  )
+
+  const totalPotential = activeLeads.reduce(
     (total, lead) =>
       total + Number(lead.potential_value ?? 0),
     0
   )
 
-  const negotiationLeads = safeLeads.filter(
+  const negotiationLeads = activeLeads.filter(
     (lead) => {
       const stage = Array.isArray(
         lead.pipeline_stages
@@ -151,7 +158,7 @@ export default async function LeadsPage() {
 
             <div className="mt-7">
               <p className="text-[38px] font-semibold leading-none tracking-[-0.04em] text-gray-950">
-                {safeLeads.length}
+                {activeLeads.length}
               </p>
 
               <div className="mt-5 h-px w-full bg-gray-100" />
@@ -215,8 +222,8 @@ export default async function LeadsPage() {
           <span className="h-px flex-1 bg-gray-200" />
 
           <span className="shrink-0 text-xs text-gray-400">
-            {safeLeads.length}{' '}
-            {safeLeads.length === 1
+            {activeLeads.length}{' '}
+            {activeLeads.length === 1
               ? 'lead'
               : 'leads'}
           </span>
