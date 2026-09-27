@@ -36,8 +36,11 @@ export default function Topbar() {
   const [loadingNotifications, setLoadingNotifications] =
     useState(false)
 
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
   const searchRef = useRef<HTMLDivElement>(null)
   const notificationRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -55,6 +58,13 @@ export default function Topbar() {
         !notificationRef.current.contains(target)
       ) {
         setShowNotifications(false)
+      }
+
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(target)
+      ) {
+        setShowUserMenu(false)
       }
     }
 
@@ -358,6 +368,14 @@ export default function Topbar() {
     }
   }
 
+  async function handleLogout() {
+    setShowUserMenu(false)
+
+    await supabase.auth.signOut()
+
+    window.location.href = '/login'
+  }
+
   function formatNotificationDate(
     date: string
   ) {
@@ -531,7 +549,7 @@ export default function Topbar() {
               fill="none"
             >
               <path
-                d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 15 3 17H21C21 15 18 15 18 8ZM10 21H14"
+                d="M18 8C18 6.34 16.66 5 15 5H9C7.34 5 6 6.34 6 8V13.5C6 15 5 16 4 17H20C19 16 18 15 18 13.5V8ZM10 20H14"
                 stroke="currentColor"
                 strokeWidth="1.7"
                 strokeLinecap="round"
@@ -588,7 +606,7 @@ export default function Topbar() {
                       className="text-gray-400"
                     >
                       <path
-                        d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 15 3 17H21C21 15 18 15 18 8ZM10 21H14"
+                        d="M18 8C18 6.34 16.66 5 15 5H9C7.34 5 6 6.34 6 8V13.5C6 15 5 16 4 17H20C19 16 18 15 18 13.5V8ZM10 20H14"
                         stroke="currentColor"
                         strokeWidth="1.6"
                         strokeLinecap="round"
@@ -683,8 +701,106 @@ export default function Topbar() {
           )}
         </div>
 
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
-          N
+        <div
+          ref={userMenuRef}
+          className="relative"
+        >
+          <button
+            type="button"
+            onClick={() =>
+              setShowUserMenu((current) => !current)
+            }
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-sm font-semibold text-white transition hover:bg-gray-800"
+            aria-label="Menu do usuário"
+            aria-expanded={showUserMenu}
+          >
+            N
+          </button>
+
+          {showUserMenu && (
+            <div className="absolute right-0 top-[calc(100%+10px)] w-52 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
+              <div className="border-b border-gray-100 px-4 py-4">
+                <p className="text-sm font-semibold text-gray-900">
+                  Minha conta
+                </p>
+
+                <p className="mt-1 text-xs text-gray-400">
+                  NORTH CRM
+                </p>
+              </div>
+
+              <div className="p-2">
+                <Link
+                  href="/configuracoes"
+                  onClick={() =>
+                    setShowUserMenu(false)
+                  }
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400"
+                  >
+                    <path
+                      d="M12 15.5C13.933 15.5 15.5 13.933 15.5 12C15.5 10.067 13.933 8.5 12 8.5C10.067 8.5 8.5 10.067 8.5 12C8.5 13.933 10.067 15.5 12 15.5Z"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                    />
+
+                    <path
+                      d="M19.4 15C19.5 14.8 19.6 14.5 19.7 14.2L21 13.2L20.8 10.8L19.4 10.2C19.3 9.9 19.1 9.6 19 9.3L19.2 7.7L17.4 5.9L15.9 6.2C15.6 6 15.3 5.9 15 5.8L14.4 4.4L12 4.2L10.9 5.5C10.6 5.6 10.3 5.7 10 5.8L8.5 5.5L6.7 7.3L7 8.8C6.8 9.1 6.7 9.4 6.6 9.7L5.2 10.3L5 12.7L6.3 13.7C6.4 14 6.5 14.3 6.6 14.6L6.3 16.1L8.1 17.9L9.6 17.6C9.9 17.8 10.2 17.9 10.5 18L11.1 19.4L13.5 19.6L14.6 18.3C14.9 18.2 15.2 18.1 15.5 18L17 18.3L18.8 16.5L18.5 15C18.8 15 19.1 15 19.4 15Z"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                  Configurações
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M9 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H9"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                    />
+
+                    <path
+                      d="M14 17L19 12L14 7"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+
+                    <path
+                      d="M19 12H9"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+
+                  Sair
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
