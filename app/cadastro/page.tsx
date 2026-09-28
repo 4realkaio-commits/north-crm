@@ -2,8 +2,11 @@
 
 import {
   FormEvent,
+  Suspense,
+  useEffect,
   useState,
 } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function createSlug(value: string) {
@@ -16,7 +19,13 @@ function createSlug(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-export default function CadastroPage() {
+function CadastroForm() {
+  const searchParams =
+    useSearchParams()
+
+  const conviteToken =
+    searchParams.get('convite')
+
   const [fullName, setFullName] =
     useState('')
 
@@ -41,13 +50,25 @@ export default function CadastroPage() {
   const [loading, setLoading] =
     useState(false)
 
+  useEffect(() => {
+    if (conviteToken) {
+      setSuccess(
+        'Você recebeu um convite para entrar em uma equipe. Crie sua conta para continuar.'
+      )
+    }
+  }, [conviteToken])
+
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault()
 
     setError('')
-    setSuccess('')
+
+    if (!conviteToken) {
+      setSuccess('')
+    }
+
     setLoading(true)
 
     if (
@@ -72,17 +93,20 @@ export default function CadastroPage() {
     const supabase =
       createClient()
 
-    const slug =
-      createSlug(
+    let slug = ''
+
+    if (!conviteToken) {
+      slug = createSlug(
         organizationName
       )
 
-    if (!slug) {
-      setError(
-        'Informe um nome válido para a organização.'
-      )
-      setLoading(false)
-      return
+      if (!slug) {
+        setError(
+          'Informe um nome válido para a organização.'
+        )
+        setLoading(false)
+        return
+      }
     }
 
     const {
@@ -133,6 +157,54 @@ export default function CadastroPage() {
       return
     }
 
+    /*
+     * Fluxo de convite:
+     *
+     * A organização já existe.
+     * Portanto, não criamos uma nova organização.
+     *
+     * O RPC valida o token, confere o
+     * e-mail do convite e adiciona
+     * o usuário à organização com
+     * a função definida no convite.
+     */
+    if (conviteToken) {
+      const {
+        error: invitationError,
+      } =
+        await supabase.rpc(
+          'accept_invitation',
+          {
+            p_token:
+              conviteToken,
+          }
+        )
+
+      if (invitationError) {
+        setError(
+          invitationError.message
+        )
+        setLoading(false)
+        return
+      }
+
+      setSuccess(
+        'Conta criada e convite aceito com sucesso. Entrando no NORTH CRM...'
+      )
+
+      window.location.href =
+        '/equipe'
+
+      return
+    }
+
+    /*
+     * Cadastro normal:
+     *
+     * Como não existe convite,
+     * criamos uma nova organização
+     * e colocamos o usuário como owner.
+     */
     const {
       error: organizationError,
     } =
@@ -173,7 +245,9 @@ export default function CadastroPage() {
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            Crie sua conta e comece sua operação.
+            {conviteToken
+              ? 'Crie sua conta para entrar na equipe.'
+              : 'Crie sua conta e comece sua operação.'}
           </p>
         </div>
 
@@ -181,6 +255,12 @@ export default function CadastroPage() {
           onSubmit={handleSubmit}
           className="space-y-5 rounded-2xl border bg-white p-8 shadow-sm"
         >
+          {conviteToken && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+              Você está entrando por um convite de equipe.
+            </div>
+          )}
+
           <div>
             <label
               htmlFor="fullName"
@@ -205,31 +285,33 @@ export default function CadastroPage() {
             />
           </div>
 
-          <div>
-            <label
-              htmlFor="organizationName"
-              className="mb-2 block text-sm font-medium"
-            >
-              Nome da organização
-            </label>
+          {!conviteToken && (
+            <div>
+              <label
+                htmlFor="organizationName"
+                className="mb-2 block text-sm font-medium"
+              >
+                Nome da organização
+              </label>
 
-            <input
-              id="organizationName"
-              type="text"
-              placeholder="Nome da sua empresa"
-              value={
-                organizationName
-              }
-              onChange={(event) =>
-                setOrganizationName(
-                  event.target.value
-                )
-              }
-              required
-              disabled={loading}
-              className="w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-black disabled:bg-gray-50"
-            />
-          </div>
+              <input
+                id="organizationName"
+                type="text"
+                placeholder="Nome da sua empresa"
+                value={
+                  organizationName
+                }
+                onChange={(event) =>
+                  setOrganizationName(
+                    event.target.value
+                  )
+                }
+                required
+                disabled={loading}
+                className="w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-black disabled:bg-gray-50"
+              />
+            </div>
+          )}
 
           <div>
             <label
@@ -324,7 +406,9 @@ export default function CadastroPage() {
           >
             {loading
               ? 'Criando conta...'
-              : 'Criar conta'}
+              : conviteToken
+                ? 'Criar conta e entrar na equipe'
+                : 'Criar conta'}
           </button>
 
           <div className="text-center">
@@ -338,5 +422,21 @@ export default function CadastroPage() {
         </form>
       </div>
     </main>
+  )
+}
+
+export default function CadastroPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6 py-10">
+          <div className="text-sm text-gray-500">
+            Carregando...
+          </div>
+        </main>
+      }
+    >
+      <CadastroForm />
+    </Suspense>
   )
 }

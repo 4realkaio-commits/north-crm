@@ -89,7 +89,8 @@ export default async function EquipePage() {
 
   const canManageMembers =
     membership.role === 'owner' ||
-    membership.role === 'admin'
+    membership.role === 'admin' ||
+    membership.role === 'manager'
 
   return (
     <div className="mx-auto w-full max-w-[1600px]">
@@ -155,7 +156,13 @@ export default async function EquipePage() {
             </div>
 
             <div className="max-w-2xl">
-              <InviteMemberForm />
+              <InviteMemberForm
+                currentRole={membership.role as
+                  | 'owner'
+                  | 'admin'
+                  | 'manager'
+                  | 'member'}
+              />
             </div>
           </div>
         </section>
@@ -246,20 +253,20 @@ export default async function EquipePage() {
                   member.user_id === user.id
 
                 const canChangeRole =
-                  canManageMembers &&
+                  membership.role === 'owner' &&
                   !isCurrentUser &&
-                  !(
-                    membership.role === 'admin' &&
-                    member.role === 'owner'
-                  )
+                  member.role !== 'owner' ||
+                  membership.role === 'admin' &&
+                  !isCurrentUser &&
+                  member.role !== 'owner'
 
                 const canRemove =
-                  canManageMembers &&
+                  membership.role === 'owner' &&
                   !isCurrentUser &&
-                  !(
-                    membership.role === 'admin' &&
-                    member.role === 'owner'
-                  )
+                  member.role !== 'owner' ||
+                  membership.role === 'admin' &&
+                  !isCurrentUser &&
+                  member.role !== 'owner'
 
                 return (
                   <div

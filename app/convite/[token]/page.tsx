@@ -12,16 +12,6 @@ export default async function ConvitePage({
 }: ConvitePageProps) {
   const { token } = await params
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
   if (!token) {
     return (
       <div className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6">
@@ -36,10 +26,25 @@ export default async function ConvitePage({
     )
   }
 
-  const { data: organizationId, error } =
-    await supabase.rpc('accept_invitation', {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect(`/cadastro?convite=${encodeURIComponent(token)}`)
+  }
+
+  const {
+    data: organizationId,
+    error,
+  } = await supabase.rpc(
+    'accept_invitation',
+    {
       p_token: token,
-    })
+    }
+  )
 
   if (error) {
     return (
